@@ -140,19 +140,9 @@ std::unique_ptr<ImageView> Image::view() const {
     View* view = source_view;
 
     if (type == "WSI") {
-        const auto bitsStored = view->bitsStored();
-        // Enable best quality
-        const std::map<std::size_t, std::vector<std::size_t>> truncationLevel{{0, {0, 0, 0}}};
-        source_view->truncation(false, false, truncationLevel);
-
-        if (bitsStored > 8) {
-            PixelEngine::UserView& user_view = source_view->addChainedView();
-            auto matrix = user_view.addFilter("3x3Matrix16"); // Apply ICC profile
-            auto icc_matrix = iccMatrix();
-            user_view.filterParameterMatrix3x3(matrix, "matrix3x3", icc_matrix);
-            user_view.addFilter("Linear16ToSRGB8"); // This Filter converts 9-bit image to 8-bit image.
-            view = static_cast<View*>(&user_view);  // Safe because View is the base class of UserView
-        }
+        // Use default DisplayView parameters
+        PixelEngine::DisplayView& displayView = _image.displayView();
+        view = static_cast<View*>(&displayView);
     }
     return std::make_unique<ImageView>(*view);
 }
